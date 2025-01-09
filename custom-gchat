@@ -1,0 +1,149 @@
+#!/var/ossec/framework/python/bin/python3.10
+# Copyright (C) 2015-2021, Wazuh Inc.
+#
+# This program is free software; you can redistribute it
+# and/or modify it under the terms of the GNU General Public
+# License (version 2) as published by the FSF - Free Software
+# Foundation.
+
+import json
+import sys
+import time
+import os
+import httplib2
+
+try:
+    import requests
+    from requests.auth import HTTPBasicAuth
+except Exception as e:
+    print("No module 'requests' found. Install: pip install requests")
+    sys.exit(1)
+
+# Global vars
+
+GCHAT_URI = 'https://chat.googleapis.com/v1/spaces/********/messages?key=*********************-******************&token=***************************************'
+debug_enabled = False
+pwd = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+json_alert = {}
+now = time.strftime("%a %b %d %H:%M:%S %Z %Y")
+
+# Set paths
+log_file = '{0}/logs/integrations.log'.format(pwd)
+
+def main(args):
+    debug("# Starting")
+
+    # Read args
+    alert_file_location = args[1]
+    webhook = GCHAT_URI
+
+    debug("# Webhook")
+    debug(webhook)
+
+    debug("# File location")
+    debug(alert_file_location)
+
+    # Load alert. Parse JSON object.
+    with open(alert_file_location, 'rb') as alert_file:
+        last_line = alert_file.read().decode('utf-8').splitlines()[-1]
+        if last_line.split():
+            json_alert = json.loads(last_line)
+    debug("# Processing alert")
+    debug(json_alert)
+
+    debug("# Generating message")
+    msg = generate_msg(json_alert)
+    debug(msg)
+
+    debug("# Sending message")
+    send_msg(msg, webhook)
+
+def debug(msg):
+    if debug_enabled:
+        msg = "{0}: {1}\n".format(now, msg)
+        print(msg)
+        with open(log_file, "a") as f:
+            f.write(msg)
+
+def generate_msg(alert):
+    title = alert['rule'].get('description', "No Description Available")
+    alert_level = str(alert['rule'].get('level', "No Rule Level"))
+    agentid = str(alert['agent'].get('id', "No ID Found"))
+    agentname = alert['agent'].get('name', "No Name Found")
+    agentip = alert['agent'].get('ip', "No IP Found")
+    location = alert.get('location', "No Location Specified")
+    timestamp = alert.get('timestamp', "No Timestamp Available")
+    full_log = alert.get('full_log', "No Log Data Available")
+
+    cards = {
+        'cards': [
+            {
+                "header": {
+                    "title": "Wazuh Alert Notification",
+                    "subtitle": title,
+                },
+                "sections": [
+                    {
+                        "header": "Details",
+                        "widgets": [
+                            {
+                                "textParagraph": {
+                                    "text": (
+                                        f"Timestamp: {timestamp}\n"
+                                        f"AgentID: {agentid}\n"
+                                        f"Agent Name: {agentname}\n"
+                                        f"Agent IP: {agentip}\n"
+                                        f"Alert Level: {alert_level}\n"
+                                        f"Location: {location}\n"
+                                        f"Log:\n{full_log}\n"
+                                    )
+                                }
+                            }
+                        ]
+                    }
+                ]
+            }        
+        ]
+    }
+    return json.dumps(cards)
+
+def send_msg(msg, url):
+    headers = {'Content-Type': 'application/json; charset=UTF-8'}
+
+    http_obj = httplib2.Http()
+
+    response = http_obj.request(
+        uri=url,
+        method='POST',
+        headers=headers,
+        body=msg,
+    )
+    debug(response)
+
+if __name__ == "__main__":
+    try:
+        # Read arguments
+        bad_arguments = False
+        if len(sys.argv) >= 2:
+            msg = '{0} {1}'.format(
+                now,
+                sys.argv[1],
+            )
+        else:
+            msg = '{0} Wrong arguments'.format(now)
+            bad_arguments = True
+
+        # Logging the call
+        with open(log_file, 'a') as f:
+            f.write(msg + '\n')
+
+        if bad_arguments:
+            debug("# Exiting: Bad arguments.")
+            sys.exit(1)
+
+        # Main function
+        main(sys.argv)
+
+    except Exception as e:
+        debug(str(e))
+        raise

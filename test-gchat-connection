@@ -1,0 +1,37 @@
+import requests
+import json
+
+def send_message_to_google_chat(webhook_url, message):
+    """
+    Sends a message to a Google Chat space using the webhook URL.
+
+    :param webhook_url: str - The webhook URL for the Google Chat integration.
+    :param message: str - The message to send.
+    """
+    headers = {
+        "Content-Type": "application/json"
+    }
+
+    payload = {
+        "text": message
+    }
+
+    try:
+        response = requests.post(webhook_url, headers=headers, data=json.dumps(payload))
+
+        if response.status_code == 200:
+            print("Message sent successfully.")
+        else:
+            print(f"Failed to send message. Status code: {response.status_code}")
+            print(f"Response: {response.text}")
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+if __name__ == "__main__":
+    # Replace with your Google Chat webhook URL
+    WEBHOOK_URL = "https://chat.googleapis.com/v1/spaces/********/messages?key=*********************-******************&token=***************************************"
+
+    # The message to send
+    MESSAGE = "Hello, this is a test message from my Python script!"
+
+    send_message_to_google_chat(WEBHOOK_URL, MESSAGE)
