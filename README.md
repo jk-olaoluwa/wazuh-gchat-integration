@@ -13,7 +13,7 @@ This repository contains scripts to integrate Wazuh alerts with Google Chat. It 
    ```
 
 2. **File Location and Permissions**:
-   - Place the scripts in `/var/ossec/integrations/custom-gchat`.
+   - Place the scripts in `/var/ossec/integrations/`.
    - Set the appropriate permissions:
      ```bash
      chmod 750 /var/ossec/integrations/custom-gchat
