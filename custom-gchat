@@ -33,6 +33,8 @@ log_file = '{0}/logs/integrations.log'.format(pwd)
 def main(args):
     debug("# Starting")
 
+    json_alert = {}
+
     # Read args
     alert_file_location = args[1]
     webhook = GCHAT_URI
