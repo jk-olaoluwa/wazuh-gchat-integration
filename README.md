@@ -1,4 +1,4 @@
-# Integrate Wazuh 4.9 to Google Chat
+# Integrate Wazuh 4.9 with Google Chat.
 
 This repository contains scripts to integrate Wazuh alerts with Google Chat. It includes:
 - `custom-gchat`: The main script for the integration.
