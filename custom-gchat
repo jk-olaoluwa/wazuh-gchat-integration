@@ -66,11 +66,14 @@ def debug(msg):
             f.write(msg)
 
 def generate_msg(alert):
-    title = alert['rule'].get('description', "No Description Available")
-    alert_level = str(alert['rule'].get('level', "No Rule Level"))
-    agentid = str(alert['agent'].get('id', "No ID Found"))
-    agentname = alert['agent'].get('name', "No Name Found")
-    agentip = alert['agent'].get('ip', "No IP Found")
+    rule = alert.get('rule', {})
+    agent = alert.get('agent', {})
+
+    title = rule.get('description', "No Description Available")
+    alert_level = str(rule.get('level', "No Rule Level"))
+    agentid = str(agent.get('id', "No ID Found"))
+    agentname = agent.get('name', "No Name Found")
+    agentip = agent.get('ip', "No IP Found")
     location = alert.get('location', "No Location Specified")
     timestamp = alert.get('timestamp', "No Timestamp Available")
     full_log = alert.get('full_log', "No Log Data Available")
